@@ -103,7 +103,7 @@ function addDepartment(){
 function addRole(){
     const departmentId = [];
     const departmentName = [];
-    // creates the list of departments from the existing table
+    // creates the list of departments and their ids from the existing table
     db.query("SELECT * FROM department;", (err, res) =>{
         if (err){
             console.log(err);
@@ -147,6 +147,95 @@ function addRole(){
             err ? console.log(err) : console.log("New Role Added!"), viewRoles();
         });
     });
+}
+
+// adds a new employee to the database from user entered parameters
+function addEmployee(){
+    const roleId = [];
+    const roleTitle = [];
+    const employeeId = [];
+    const employeeName = [];
+
+    // creates a list of roles and their ids from the existing database
+    db.query("SELECT * FROM roles;", (err, res)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            for(let i = 0; i < res.length; i++){
+                roleId.push(res[i].id);
+                roleTitle.push(res[i].title);
+            }
+        }
+    });
+
+    // creates a list of employees and their ids from the existing database
+    db.query("SELECT * FROM employee;", (err, res)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            for(let x = 0; x < res.length; x++){
+                employeeId.push(res[x].id);
+                employeeName.push(res[x].first_name+" "+res[x].last_name);
+            }
+            employeeName.push("None");
+        }
+
+    });
+
+    inquirer.prompt([
+        {
+            type: "input",
+            message: "What is the new employee's first name?",
+            name: "newFirstName"
+        },
+        {
+            type: "input",
+            message: "What is the new employee's last name?",
+            name: "newLastName"
+        },
+        {
+            type: "list",
+            message: "What is the new employee's role?",
+            name: "newRole",
+            choices: roleTitle
+        },
+        {
+            type: "list",
+            message: "Who is the new employee's manager?",
+            name: "newManager",
+            choices: employeeName
+        }
+    ])
+    .then((res)=>{
+        let newRoleId;
+        let newManagerId;
+
+        //assigns the id of the role to the corresponding user selection
+        for(let x = 0; x < roleId.length; x++){
+            if(res.newRole === roleTitle[x]){
+                newRoleId = roleId[x];
+                break;
+            }
+        }
+
+        //assigns the id of the manager to the corresponding user selection, if they selected none, it is marked as null
+        for(let x = 0; x < employeeId.length; x++){
+            if(res.newManager === "None"){
+                newManagerId = null;
+                break;
+            }
+            else if(res.newManager === employeeName[x]){
+                newManagerId = employeeId[x];
+                break;
+            }
+        }
+
+        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${res.newFirstName}", "${res.newLastName}", ${newRoleId}, ${newManagerId});`, (err, res) =>{
+            err ? console.log(err) : console.log("New Employee Added!"), viewEmployees();
+        });
+    })
 }
 
 init();
