@@ -184,6 +184,7 @@ function addEmployee(){
 
     });
 
+
     inquirer.prompt([
         {
             type: "input",
@@ -236,6 +237,79 @@ function addEmployee(){
             err ? console.log(err) : console.log("New Employee Added!"), viewEmployees();
         });
     })
+}
+
+
+function updateRole(){
+    const roleId = [];
+    const roleTitle = [];
+    const employeeId = [];
+    const employeeName = [];
+
+    // creates a list of roles and their ids from the existing database
+    db.query("SELECT * FROM roles;", (err, res)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            for(let i = 0; i < res.length; i++){
+                roleId.push(res[i].id);
+                roleTitle.push(res[i].title);
+            }
+        }
+
+        // creates a list of employees and their ids from the existing database
+        db.query("SELECT * FROM employee;", (err, res)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                for(let x = 0; x < res.length; x++){
+                    employeeId.push(res[x].id);
+                    employeeName.push(res[x].first_name+" "+res[x].last_name);
+                }
+            }
+
+            inquirer.prompt([
+                {
+                    type: "list",
+                    message: "Who's role do you want to update?",
+                    name: "chosenEmployee",
+                    choices: employeeName
+                },
+                {
+                    type: "list",
+                    message: "What is the employee's new role?",
+                    name: "newRole",
+                    choices: roleTitle
+                }
+            ])
+            .then((res)=>{
+                let chosenEmployeeId;
+                let newRoleId;
+        
+                //assigns the id of the manager to the corresponding user selection
+                for(let x = 0; x < employeeName.length; x++){
+                    if(res.chosenEmployee === employeeName[x]){
+                        chosenEmployeeId = employeeId[x]
+                        break;
+                    }
+                }
+        
+                //assigns the id of the role to the corresponding user selection
+                for(let x = 0; x < roleId.length; x++){
+                    if(res.newRole === roleTitle[x]){
+                        newRoleId = roleId[x];
+                        break;
+                    }
+                }
+        
+                db.query(`UPDATE employee SET role_id = ${newRoleId} WHERE id = ${chosenEmployeeId}`, (err, res)=>{
+                    err ? console.log(err) : console.log("Employee role updated!"), viewEmployees();
+                })
+            })
+        });
+    });
 }
 
 init();
